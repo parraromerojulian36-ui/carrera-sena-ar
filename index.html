@@ -15,6 +15,8 @@
     </a-entity>
 
     <a-marker preset="hiro">
+      <a-box position="0 0 0" color="red" scale="0.5 0.5 0.5"></a-box>
+
       <a-gltf-model 
         src="cofre.glb" 
         class="interactuable"
@@ -23,7 +25,8 @@
         onclick="lanzarTrivia()">
       </a-gltf-model>
     </a-marker>
-  </a-scene>
+
+<a-entity light="type: ambient; color: #FFF; intensity: 1.5"></a-entity>
 
   <script>
     function lanzarTrivia() {
