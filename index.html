@@ -12,22 +12,28 @@
   <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
     
     <a-entity light="type: ambient; color: #FFF; intensity: 1.0"></a-entity>
-    
     <a-entity light="type: directional; color: #FFF; intensity: 1.2" position="-1 2 1"></a-entity>
 
     <a-entity camera>
-      <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactuable"></a-entity>
+        <a-entity cursor="rayOrigin: mouse" raycaster="objects: .interactuable"></a-entity>
     </a-entity>
 
     <a-marker preset="hiro">
-      <a-gltf-model 
-        src="Mimic.glb" 
-        class="interactuable"
-        scale="0.5 0.5 0.5" 
-        position="0 0 0"
-        onclick="lanzarTrivia()">
-      </a-gltf-model>
+        <a-gltf-model src="Mimic.glb" 
+                      class="interactuable"
+                      scale="0.5 0.5 0.5" 
+                      position="0 0 0">
+        </a-gltf-model>
     </a-marker>
-  </a-scene>
+
+    <a-marker preset="kanji">
+        <a-gltf-model src ="Serpiente.glb" 
+               class="interactuable"
+               scale="0.5 0.5 0.5" 
+               position="0 0.5 0">
+        <a-gltf-model>
+    </a-marker>
+
+</a-scene>
 </body>
 </html>
