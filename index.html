@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Cofre ADSO - RA Inteligente Estática</title>
+  <title>Cofre ADSO - Anclaje Fijo Real</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
@@ -12,29 +12,36 @@
       init: function () {
         var marker = this.el;
         var model = marker.querySelector('a-gltf-model');
+        var sceneEl = document.querySelector('a-scene');
 
-        // Cuando la cámara encuentra la hoja por primera vez
         marker.addEventListener('markerFound', function() {
           if (model && !model.classList.contains('fijado')) {
-            // Marcamos el modelo como fijado
             model.classList.add('fijado');
-            
-            // Forzamos a que su matriz de transformación se vuelva independiente del marcador
-            // Esto hace que capture su posición en el "mundo real" y no cambie más
-            model.object3D.matrixAutoUpdate = false;
-            
-            console.log("¡Lugar detectado! Objeto congelado en el espacio físico.");
-          }
-        });
 
-        // Cuando la cámara pierde la hoja, evitamos que AR.js oculte o mueva el objeto
-        marker.addEventListener('markerLost', function(e) {
-          if (model && model.classList.contains('fijado')) {
-            // Forzamos la visibilidad activa
-            model.setAttribute('visible', true);
-            
-            // Obligamos a Three.js a mantener la última posición calculada en la habitación
-            model.object3D.visible = true;
+            // 1. Forzar a Blender/A-Frame a calcular la posición exacta en el mundo real en este milisegundo
+            model.object3D.updateMatrixWorld(true);
+
+            // 2. Descomponer y guardar la posición, rotación y escala exactas de la hoja
+            var position = new THREE.Vector3();
+            var quaternion = new THREE.Quaternion();
+            var scale = new THREE.Vector3();
+            model.object3D.matrixWorld.decompose(position, quaternion, scale);
+
+            // 3. SACAR el modelo del marcador y mudarlo a la escena global
+            // Al hacer esto, AR.js ya no puede ocultarlo cuando se pierda la hoja
+            marker.removeChild(model);
+            sceneEl.appendChild(model);
+
+            // 4. Aplicar la posición guardada de la hoja al modelo en su nueva casa (la escena)
+            model.object3D.position.copy(position);
+            model.object3D.quaternion.copy(quaternion);
+            model.object3D.scale.copy(scale);
+
+            // 5. CONGELAR la matriz para que no se pegue a la pantalla ni se mueva más
+            model.object3D.matrixAutoUpdate = false;
+            model.object3D.updateMatrixWorld(true);
+
+            console.log("¡Núcleo sembrado con éxito en el lugar físico de la hoja!");
           }
         });
       }
@@ -52,7 +59,7 @@
     <a-entity light="type: ambient; color: #FFF; intensity: 1.0"></a-entity>
     <a-entity light="type: directional; color: #FFF; intensity: 1.2" position="-1 2 1"></a-entity>
 
-    <a-entity camera></a-entity>
+    <a-entity camera="far: 10000; near: 0.1;"></a-entity>
 
     <a-marker type="pattern" url="C.patt" guardar-posicion>
         <a-gltf-model src="Nucleo6.glb" 
