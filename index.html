@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Cofre ADSO - RA Inteligente Sólida</title>
+  <title>Cofre ADSO - RA Múltiple Inteligente</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
@@ -22,15 +22,17 @@
             model.object3D.updateMatrixWorld(true);
             model.object3D.matrixAutoUpdate = false;
             
-            // TRUCO MAESTRO: Desactivamos el script interno de AR.js que oculta las cosas
-            // Al hacer esto, AR.js ya no podrá "esconder" el marcador cuando quites el papel
-            marker.components["arjs-anchor"].context.arToolkitContext.arTick = function() {};
+            // TRUCO MAESTRO MEJORADO: Desactivamos el tick de actualización SOLO para este marcador.
+            // Esto permite que este objeto se quede congelado en su lugar sin afectar la detección de los otros marcadores.
+            if (marker.components["arjs-anchor"]) {
+              marker.components["arjs-anchor"].tick = function() {};
+            }
 
-            console.log("¡Lugar detectado y mundo de RA congelado con éxito!");
+            console.log("¡Objeto detectado y congelado de forma independiente!");
           }
         });
 
-        // Bloqueamos por completo cualquier intento de ocultar el objeto
+        // Bloqueamos por completo cualquier intento de ocultar el objeto al perder la hoja
         marker.addEventListener('markerLost', function(e) {
           if (model && model.classList.contains('fijado')) {
             model.setAttribute('visible', true);
@@ -53,6 +55,26 @@
     <a-entity light="type: directional; color: #FFF; intensity: 1.2" position="-1 2 1"></a-entity>
 
     <a-entity camera="far: 10000; near: 0.1;"></a-entity>
+
+    <a-marker type="pattern" url="A.patt" guardar-posicion>
+        <a-gltf-model src="Robot1.glb" 
+                      class="interactuable"
+                      scale="2 2 2" 
+                      position="0 0 0"
+                      rotation="-90 0 0"
+                      animation-mixer> 
+        </a-gltf-model>
+    </a-marker>
+
+    <a-marker type="pattern" url="B.patt" guardar-posicion>
+        <a-gltf-model src="Robot2.glb" 
+                      class="interactuable"
+                      scale="0.5 0.5 0.5" 
+                      position="0 0.5 0"
+                      rotation="-90 0 0"
+                      animation-mixer> 
+        </a-gltf-model>
+    </a-marker>
 
     <a-marker type="pattern" url="C.patt" guardar-posicion>
         <a-gltf-model src="Nucleo6.glb" 
