@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Cofre ADSO - RA Inteligente</title>
+  <title>Cofre ADSO - RA Inteligente Estática</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
@@ -11,38 +11,30 @@
     AFRAME.registerComponent('guardar-posicion', {
       init: function () {
         var marker = this.el;
-        var sceneEl = document.querySelector('a-scene');
+        var model = marker.querySelector('a-gltf-model');
 
+        // Cuando la cámara encuentra la hoja por primera vez
         marker.addEventListener('markerFound', function() {
-          var model = marker.querySelector('a-gltf-model');
-
-          // Si el modelo original existe y no hemos creado el clon persistente todavía
-          if (model && !marker.classList.contains('copiado')) {
-            marker.classList.add('copiado'); // Marcamos el marcador para que no repita este proceso
-
-            // Creamos una nueva entidad idéntica en la escena global
-            var nuevoModelo = document.createElement('a-gltf-model');
+          if (model && !model.classList.contains('fijado')) {
+            // Marcamos el modelo como fijado
+            model.classList.add('fijado');
             
-            // Le copiamos exactamente todos los atributos del original
-            nuevoModelo.setAttribute('src', model.getAttribute('src'));
-            nuevoModelo.setAttribute('class', model.getAttribute('class'));
-            nuevoModelo.setAttribute('scale', model.getAttribute('scale'));
-            nuevoModelo.setAttribute('animation-mixer', model.getAttribute('animation-mixer'));
+            // Forzamos a que su matriz de transformación se vuelva independiente del marcador
+            // Esto hace que capture su posición en el "mundo real" y no cambie más
+            model.object3D.matrixAutoUpdate = false;
             
-            // Calculamos la posición exacta en el mundo real en ese preciso segundo
-            var posicionMundo = new THREE.Vector3();
-            model.object3D.updateMatrixWorld();
-            model.object3D.getWorldPosition(posicionMundo);
+            console.log("¡Lugar detectado! Objeto congelado en el espacio físico.");
+          }
+        });
+
+        // Cuando la cámara pierde la hoja, evitamos que AR.js oculte o mueva el objeto
+        marker.addEventListener('markerLost', function(e) {
+          if (model && model.classList.contains('fijado')) {
+            // Forzamos la visibilidad activa
+            model.setAttribute('visible', true);
             
-            // Asignamos la posición fija basada en el mundo real
-            nuevoModelo.setAttribute('position', posicionMundo.x + ' ' + (posicionMundo.y + 0.5) + ' ' + posicionMundo.z);
-            nuevoModelo.setAttribute('rotation', '0 0 0');
-
-            // Añadimos el nuevo objeto directamente a la escena (fuera del marcador)
-            sceneEl.appendChild(nuevoModelo);
-
-            // Ocultamos el modelo original del marcador para que no se duplique visualmente
-            model.setAttribute('visible', false);
+            // Obligamos a Three.js a mantener la última posición calculada en la habitación
+            model.object3D.visible = true;
           }
         });
       }
