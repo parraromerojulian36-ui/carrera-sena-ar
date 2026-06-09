@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Cofre ADSO - RA Inteligente</title>
+  <title>Cofre ADSO - RA Inteligente Múltiple</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
@@ -11,11 +11,10 @@
     AFRAME.registerComponent('guardar-posicion', {
       init: function () {
         var marker = this.el;
-        var model = marker.querySelector('a-gltf-model');
 
         // Cuando la cámara encuentra la hoja por primera vez
         marker.addEventListener('markerFound', function() {
-          // Cambiamos el modelo para que ya no dependa de la hoja física
+          var model = marker.querySelector('a-gltf-model');
           if (model && !model.classList.contains('fijado')) {
             // Le decimos al motor que mantenga el objeto visible para siempre
             model.setAttribute('visible', true);
@@ -23,10 +22,11 @@
           }
         });
 
-        // Truco de magia: Bloqueamos la orden de AR.js de ocultar el objeto
+        // Bloqueamos la orden de AR.js de ocultar el objeto al perder el marcador
         marker.addEventListener('markerLost', function(e) {
+          var model = marker.querySelector('a-gltf-model');
           if (model && model.classList.contains('fijado')) {
-            // Forzamos a que siga visible e inmóvil en el espacio
+            // Forzamos a que siga visible en su última posición capturada
             model.setAttribute('visible', true);
           }
         });
@@ -46,6 +46,26 @@
     <a-entity light="type: directional; color: #FFF; intensity: 1.2" position="-1 2 1"></a-entity>
 
     <a-entity camera></a-entity>
+
+    <a-marker type="pattern" url="A.patt" guardar-posicion>
+        <a-gltf-model src="Robot1.glb" 
+                      class="interactuable"
+                      scale="2 2 2" 
+                      position="0 0 0"
+                      rotation="-90 0 0"
+                      animation-mixer> 
+        </a-gltf-model>
+    </a-marker>
+
+    <a-marker type="pattern" url="B.patt" guardar-posicion>
+        <a-gltf-model src="Robot2.glb" 
+                      class="interactuable"
+                      scale="0.5 0.5 0.5" 
+                      position="0 0.5 0"
+                      rotation="-90 0 0"
+                      animation-mixer> 
+        </a-gltf-model>
+    </a-marker>
 
     <a-marker type="pattern" url="C.patt" guardar-posicion>
         <a-gltf-model src="Nucleo6.glb" 
