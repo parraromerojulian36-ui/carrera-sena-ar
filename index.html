@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Cofre ADSO - RA Múltiple Fija</title>
+  <title>Cofre ADSO - RA Múltiple Fija Perfecta</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
@@ -16,42 +16,39 @@
         marker.addEventListener('markerFound', function() {
           var model = marker.querySelector('a-gltf-model');
 
-          // Si el modelo existe y no ha sido fijado aún
           if (model && !model.classList.contains('fijado')) {
             model.classList.add('fijado');
 
-            // 1. Forzar el cálculo exacto de las coordenadas en el espacio real
+            // 1. Forzar el cálculo de la posición real en este milisegundo
             model.object3D.updateMatrixWorld(true);
 
-            // 2. Extraer la posición, rotación y escala exactas del marcador en la habitación
+            // 2. Extraer posición, rotación y escala de la hoja física
             var position = new THREE.Vector3();
             var quaternion = new THREE.Quaternion();
             var scale = new THREE.Vector3();
             model.object3D.matrixWorld.decompose(position, quaternion, scale);
 
-            // 3. Crear una nueva entidad (un clon) que vivirá de forma independiente en la escena
+            // 3. Crear el clon independiente
             var clonModel = document.createElement('a-gltf-model');
-            
-            // Pasamos todos los atributos del original al clon
             clonModel.setAttribute('src', model.getAttribute('src'));
             clonModel.setAttribute('class', 'interactuable');
             clonModel.setAttribute('animation-mixer', model.getAttribute('animation-mixer'));
 
-            // 4. Inyectar el clon directamente en la raíz de la escena (fuera del marcador)
+            // 4. TRUCO CLAVE: Aplicar las coordenadas reales ANTES de meterlo a la escena
+            clonModel.object3D.position.copy(position);
+            clonModel.object3D.quaternion.copy(quaternion);
+            clonModel.object3D.scale.copy(scale);
+            
+            // Congelamos su matriz inmediatamente para que no se mueva con la cámara
+            clonModel.object3D.matrixAutoUpdate = false;
+
+            // 5. Ahora sí, lo soltamos en el mundo real
             sceneEl.appendChild(clonModel);
 
-            // 5. Aplicar las coordenadas reales capturadas para que se quede sembrado en ese punto del salón
-            clonModel.addEventListener('model-loaded', function() {
-              clonModel.object3D.position.copy(position);
-              clonModel.object3D.quaternion.copy(quaternion);
-              clonModel.object3D.scale.copy(scale);
-              clonModel.object3D.matrixAutoUpdate = false; // Bloquear para que no se mueva con la pantalla
-            });
-
-            // 6. Hacer desaparecer el modelo original del marcador para que no se duplique
+            // 6. Apagamos el modelo original que parpadeaba dentro del marcador
             model.setAttribute('visible', false);
             
-            console.log("¡Objeto clonado y anclado al espacio real de forma independiente!");
+            console.log("¡Objeto sembrado correctamente en las coordenadas del marcador!");
           }
         });
       }
