@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Cofre ADSO - RA Múltiple Inteligente</title>
+  <title>Cofre ADSO - RA Múltiple Fija</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
@@ -11,32 +11,47 @@
     AFRAME.registerComponent('guardar-posicion', {
       init: function () {
         var marker = this.el;
-        var model = marker.querySelector('a-gltf-model');
+        var sceneEl = document.querySelector('a-scene');
 
-        // Cuando la cámara encuentra la hoja por primera vez
         marker.addEventListener('markerFound', function() {
+          var model = marker.querySelector('a-gltf-model');
+
+          // Si el modelo existe y no ha sido fijado aún
           if (model && !model.classList.contains('fijado')) {
             model.classList.add('fijado');
-            
-            // CONGELAMOS EL MODELO: Guardamos su posición exacta respecto a la hoja
+
+            // 1. Forzar el cálculo exacto de las coordenadas en el espacio real
             model.object3D.updateMatrixWorld(true);
-            model.object3D.matrixAutoUpdate = false;
+
+            // 2. Extraer la posición, rotación y escala exactas del marcador en la habitación
+            var position = new THREE.Vector3();
+            var quaternion = new THREE.Quaternion();
+            var scale = new THREE.Vector3();
+            model.object3D.matrixWorld.decompose(position, quaternion, scale);
+
+            // 3. Crear una nueva entidad (un clon) que vivirá de forma independiente en la escena
+            var clonModel = document.createElement('a-gltf-model');
             
-            // TRUCO MAESTRO MEJORADO: Desactivamos el tick de actualización SOLO para este marcador.
-            // Esto permite que este objeto se quede congelado en su lugar sin afectar la detección de los otros marcadores.
-            if (marker.components["arjs-anchor"]) {
-              marker.components["arjs-anchor"].tick = function() {};
-            }
+            // Pasamos todos los atributos del original al clon
+            clonModel.setAttribute('src', model.getAttribute('src'));
+            clonModel.setAttribute('class', 'interactuable');
+            clonModel.setAttribute('animation-mixer', model.getAttribute('animation-mixer'));
 
-            console.log("¡Objeto detectado y congelado de forma independiente!");
-          }
-        });
+            // 4. Inyectar el clon directamente en la raíz de la escena (fuera del marcador)
+            sceneEl.appendChild(clonModel);
 
-        // Bloqueamos por completo cualquier intento de ocultar el objeto al perder la hoja
-        marker.addEventListener('markerLost', function(e) {
-          if (model && model.classList.contains('fijado')) {
-            model.setAttribute('visible', true);
-            model.object3D.visible = true;
+            // 5. Aplicar las coordenadas reales capturadas para que se quede sembrado en ese punto del salón
+            clonModel.addEventListener('model-loaded', function() {
+              clonModel.object3D.position.copy(position);
+              clonModel.object3D.quaternion.copy(quaternion);
+              clonModel.object3D.scale.copy(scale);
+              clonModel.object3D.matrixAutoUpdate = false; // Bloquear para que no se mueva con la pantalla
+            });
+
+            // 6. Hacer desaparecer el modelo original del marcador para que no se duplique
+            model.setAttribute('visible', false);
+            
+            console.log("¡Objeto clonado y anclado al espacio real de forma independiente!");
           }
         });
       }
@@ -58,7 +73,6 @@
 
     <a-marker type="pattern" url="A.patt" guardar-posicion>
         <a-gltf-model src="Robot1.glb" 
-                      class="interactuable"
                       scale="2 2 2" 
                       position="0 0 0"
                       rotation="-90 0 0"
@@ -68,7 +82,6 @@
 
     <a-marker type="pattern" url="B.patt" guardar-posicion>
         <a-gltf-model src="Robot2.glb" 
-                      class="interactuable"
                       scale="0.5 0.5 0.5" 
                       position="0 0.5 0"
                       rotation="-90 0 0"
@@ -78,7 +91,6 @@
 
     <a-marker type="pattern" url="C.patt" guardar-posicion>
         <a-gltf-model src="Nucleo6.glb" 
-                      class="interactuable"
                       scale="0.2 0.2 0.2" 
                       position="0 0.5 0"
                       rotation="0 0 0"
