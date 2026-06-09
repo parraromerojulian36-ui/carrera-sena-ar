@@ -2,32 +2,42 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Cofre ADSO - RA Inteligente</title>
+  <title>Cofre ADSO - Persistencia Total</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
 
   <script>
-    AFRAME.registerComponent('guardar-posicion', {
+    AFRAME.registerComponent('fijar-en-espacio', {
       init: function () {
         var marker = this.el;
-        var model = marker.querySelector('a-gltf-model');
-
-        // Cuando la cámara encuentra la hoja por primera vez
+        var sceneEl = document.querySelector('a-scene');
+        
         marker.addEventListener('markerFound', function() {
-          // Cambiamos el modelo para que ya no dependa de la hoja física
+          var model = marker.querySelector('a-gltf-model');
+          
+          // Si el modelo existe y aún está dentro del marcador
           if (model && !model.classList.contains('fijado')) {
-            // Le decimos al motor que mantenga el objeto visible para siempre
-            model.setAttribute('visible', true);
             model.classList.add('fijado');
-          }
-        });
 
-        // Truco de magia: Bloqueamos la orden de AR.js de ocultar el objeto
-        marker.addEventListener('markerLost', function(e) {
-          if (model && model.classList.contains('fijado')) {
-            // Forzamos a que siga visible e inmóvil en el espacio
-            model.setAttribute('visible', true);
+            // 1. Obtener la posición, rotación y escala reales en el mundo 3D
+            var worldPosition = new THREE.Vector3();
+            var worldRotation = new THREE.Quaternion();
+            var worldScale = new THREE.Vector3();
+            
+            model.object3D.updateMatrixWorld();
+            model.object3D.matrixWorld.decompose(worldPosition, worldRotation, worldScale);
+
+            // 2. Sacar el modelo del marcador y pasarlo directamente a la escena global
+            marker.removeChild(model);
+            sceneEl.appendChild(model);
+
+            // 3. Aplicarle los datos guardados para que no se mueva de ese punto
+            model.object3D.position.copy(worldPosition);
+            model.object3D.quaternion.copy(worldRotation);
+            model.object3D.scale.copy(worldScale);
+            
+            console.log("¡Objeto anclado con éxito al mundo real!");
           }
         });
       }
@@ -40,14 +50,14 @@
   <a-scene 
     embedded 
     arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-    renderer="logarithmicDepthBuffer: true;">
+    renderer="logarithmicDepthBuffer: true; precision: high;">
     
     <a-entity light="type: ambient; color: #FFF; intensity: 1.0"></a-entity>
     <a-entity light="type: directional; color: #FFF; intensity: 1.2" position="-1 2 1"></a-entity>
 
-    <a-entity camera></a-entity>
+    <a-entity camera="far: 10000; near: 0.1;"></a-entity>
 
-    <a-marker type="pattern" url="C.patt" guardar-posicion>
+    <a-marker type="pattern" url="C.patt" fijar-en-espacio>
         <a-gltf-model src="NucleoLimpio.glb" 
                       class="interactuable"
                       scale="0.2 0.2 0.2" 
