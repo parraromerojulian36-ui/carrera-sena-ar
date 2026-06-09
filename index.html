@@ -11,23 +11,38 @@
     AFRAME.registerComponent('guardar-posicion', {
       init: function () {
         var marker = this.el;
-        var model = marker.querySelector('a-gltf-model');
+        var sceneEl = document.querySelector('a-scene');
 
-        // Cuando la cámara encuentra la hoja por primera vez
         marker.addEventListener('markerFound', function() {
-          // Cambiamos el modelo para que ya no dependa de la hoja física
-          if (model && !model.classList.contains('fijado')) {
-            // Le decimos al motor que mantenga el objeto visible para siempre
-            model.setAttribute('visible', true);
-            model.classList.add('fijado');
-          }
-        });
+          var model = marker.querySelector('a-gltf-model');
 
-        // Truco de magia: Bloqueamos la orden de AR.js de ocultar el objeto
-        marker.addEventListener('markerLost', function(e) {
-          if (model && model.classList.contains('fijado')) {
-            // Forzamos a que siga visible e inmóvil en el espacio
-            model.setAttribute('visible', true);
+          // Si el modelo original existe y no hemos creado el clon persistente todavía
+          if (model && !marker.classList.contains('copiado')) {
+            marker.classList.add('copiado'); // Marcamos el marcador para que no repita este proceso
+
+            // Creamos una nueva entidad idéntica en la escena global
+            var nuevoModelo = document.createElement('a-gltf-model');
+            
+            // Le copiamos exactamente todos los atributos del original
+            nuevoModelo.setAttribute('src', model.getAttribute('src'));
+            nuevoModelo.setAttribute('class', model.getAttribute('class'));
+            nuevoModelo.setAttribute('scale', model.getAttribute('scale'));
+            nuevoModelo.setAttribute('animation-mixer', model.getAttribute('animation-mixer'));
+            
+            // Calculamos la posición exacta en el mundo real en ese preciso segundo
+            var posicionMundo = new THREE.Vector3();
+            model.object3D.updateMatrixWorld();
+            model.object3D.getWorldPosition(posicionMundo);
+            
+            // Asignamos la posición fija basada en el mundo real
+            nuevoModelo.setAttribute('position', posicionMundo.x + ' ' + (posicionMundo.y + 0.5) + ' ' + posicionMundo.z);
+            nuevoModelo.setAttribute('rotation', '0 0 0');
+
+            // Añadimos el nuevo objeto directamente a la escena (fuera del marcador)
+            sceneEl.appendChild(nuevoModelo);
+
+            // Ocultamos el modelo original del marcador para que no se duplique visualmente
+            model.setAttribute('visible', false);
           }
         });
       }
