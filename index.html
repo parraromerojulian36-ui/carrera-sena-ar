@@ -12,21 +12,21 @@
       init: function () {
         var marker = this.el;
 
-        // Cuando la cámara encuentra la hoja por primera vez
+      
         marker.addEventListener('markerFound', function() {
           var model = marker.querySelector('a-gltf-model');
           if (model && !model.classList.contains('fijado')) {
-            // Le decimos al motor que mantenga el objeto visible para siempre
+           
             model.setAttribute('visible', true);
             model.classList.add('fijado');
           }
         });
 
-        // Bloqueamos la orden de AR.js de ocultar el objeto al perder el marcador
+     
         marker.addEventListener('markerLost', function(e) {
           var model = marker.querySelector('a-gltf-model');
           if (model && model.classList.contains('fijado')) {
-            // Forzamos a que siga visible en su última posición capturada
+   
             model.setAttribute('visible', true);
           }
         });
