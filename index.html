@@ -2,31 +2,29 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Stand Adso Equipo Realidad Aumentada</title>
+  <title>Cofre ADSO - RA Múltiple Simple</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
 
   <script>
-    AFRAME.registerComponent('guardar-posicion', {
+    AFRAME.registerComponent('forzar-visibilidad', {
       init: function () {
         var marker = this.el;
 
-      
+        // Cuando la cámara encuentra la hoja por primera vez
         marker.addEventListener('markerFound', function() {
           var model = marker.querySelector('a-gltf-model');
-          if (model && !model.classList.contains('fijado')) {
-           
+          if (model) {
             model.setAttribute('visible', true);
-            model.classList.add('fijado');
+            model.classList.add('detectado');
           }
         });
 
-     
-        marker.addEventListener('markerLost', function(e) {
+        // Al perder la hoja, obligamos al objeto a seguir estando visible
+        marker.addEventListener('markerLost', function() {
           var model = marker.querySelector('a-gltf-model');
-          if (model && model.classList.contains('fijado')) {
-   
+          if (model && model.classList.contains('detectado')) {
             model.setAttribute('visible', true);
           }
         });
@@ -47,18 +45,18 @@
 
     <a-entity camera></a-entity>
 
-    <a-marker type="pattern" url="A.patt" guardar-posicion>
+    <a-marker type="pattern" url="A.patt" forzar-visibilidad>
         <a-gltf-model src="Ghost.glb" 
                       class="interactuable"
-                      scale="5 5 5" 
+                      scale="2 2 2" 
                       position="0 0 0"
                       rotation="-90 0 0"
                       animation-mixer> 
         </a-gltf-model>
     </a-marker>
 
-    <a-marker type="pattern" url="B.patt" guardar-posicion>
-        <a-gltf-model src="Snake.glb" 
+    <a-marker type="pattern" url="B.patt" forzar-visibilidad>
+        <a-gltf-model src="Mimic.glb" 
                       class="interactuable"
                       scale="0.5 0.5 0.5" 
                       position="0 0.5 0"
@@ -67,10 +65,10 @@
         </a-gltf-model>
     </a-marker>
 
-    <a-marker type="pattern" url="C.patt" guardar-posicion>
-        <a-gltf-model src="Mimic.glb" 
+    <a-marker type="pattern" url="C.patt" forzar-visibilidad>
+        <a-gltf-model src="Snake.glb" 
                       class="interactuable"
-                      scale="5 5 5" 
+                      scale="0.2 0.2 0.2" 
                       position="0 0.5 0"
                       rotation="0 0 0"
                       animation-mixer> 
